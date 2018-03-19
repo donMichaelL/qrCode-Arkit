@@ -9,6 +9,8 @@
 import UIKit
 import SceneKit
 import ARKit
+import Alamofire
+import SwiftyJSON
 
 class ViewController: UIViewController, ARSCNViewDelegate {
 
@@ -17,27 +19,37 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        // Set the view's delegate
         sceneView.delegate = self
-        
-        // Show statistics such as fps and timing information
         sceneView.showsStatistics = true
-        
-        // Create a new scene
-        let scene = SCNScene(named: "art.scnassets/ship.scn")!
-        
-        // Set the scene to the view
-        sceneView.scene = scene
+        downloadExhibitDetails(fromUrl: URL(string: "http://195.134.67.227:8000/api/details/6")!) { (exhibit) in
+            if let exhibitJSON = exhibit {
+                let modelURL = "http://195.134.67.227:8000" + exhibitJSON["model_3d"].string!
+                let textureURL = "http://195.134.67.227:8000" + exhibitJSON["texture"].string!
+                do {
+                    let scene = try SCNScene(url: URL(string: modelURL)!, options: nil)
+                    self.downloadTexture(fromUrl: URL(string: textureURL)!, { (texture) in
+                        if let textureImage = texture {
+                            let node = scene.rootNode.childNodes.first
+                            let material = SCNMaterial()
+                            material.diffuse.contents = textureImage
+                            node?.geometry?.materials = [material]
+                            self.sceneView.scene = scene
+                        }
+                    })
+                    
+
+                } catch {
+                    print(error)
+                }
+                
+            }
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        // Create a session configuration
-        let configuration = ARWorldTrackingConfiguration()
-
-        // Run the view's session
-        sceneView.session.run(configuration)
+//        let configuration = ARWorldTrackingConfiguration()
+//        sceneView.session.run(configuration)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
@@ -54,15 +66,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     // MARK: - ARSCNViewDelegate
     
-/*
-    // Override to create and configure nodes for anchors added to the view's session.
-    func renderer(_ renderer: SCNSceneRenderer, nodeFor anchor: ARAnchor) -> SCNNode? {
-        let node = SCNNode()
-     
-        return node
-    }
-*/
-    
     func session(_ session: ARSession, didFailWithError error: Error) {
         // Present an error message to the user
         
@@ -78,3 +81,42 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
     }
 }
+
+extension ViewController {
+    func downloadExhibitDetails(fromUrl url: URL,_ completion: @escaping (JSON?)->()) {
+        Alamofire.request(url, method: .get, parameters: nil).responseJSON { (response) in
+            if response.result.isSuccess {
+                let exhibitJSON: JSON = JSON(response.result.value!)
+                completion(exhibitJSON)
+            } else {
+                completion(nil)
+            }
+        }
+    }
+    
+    func downloadTexture(fromUrl url: URL,_ completion: @escaping (UIImage?)->()) {
+        DispatchQueue.global().async {
+            do {
+                let data = try Data(contentsOf: url)
+                DispatchQueue.main.async {
+                    completion(UIImage(data: data))
+                }
+            } catch {
+                print("Error \(error)")
+            }
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
