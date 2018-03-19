@@ -13,6 +13,7 @@
 		37A71604205FC9E900B353AA /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 37A71602205FC9E900B353AA /* Main.storyboard */; };
 		37A71606205FC9E900B353AA /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 37A71605205FC9E900B353AA /* Assets.xcassets */; };
 		37A71609205FC9E900B353AA /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 37A71607205FC9E900B353AA /* LaunchScreen.storyboard */; };
+		37A71611205FDFA100B353AA /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 37A71610205FDFA000B353AA /* Default-568h@2x.png */; };
 		E067235A8F65899E7858DC28 /* Pods_qrCode_arkit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F8DC2E5D99AF897FF2BC2ED /* Pods_qrCode_arkit.framework */; };
 /* End PBXBuildFile section */
 
@@ -26,6 +27,7 @@
 		37A71605205FC9E900B353AA /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		37A71608205FC9E900B353AA /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		37A7160A205FC9E900B353AA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		37A71610205FDFA000B353AA /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		45F30E23CAB8629B30EECE11 /* Pods-qrCode-arkit.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-qrCode-arkit.release.xcconfig"; path = "Pods/Target Support Files/Pods-qrCode-arkit/Pods-qrCode-arkit.release.xcconfig"; sourceTree = "<group>"; };
 		67B016FEFCEEB18D941AD15D /* Pods-qrCode-arkit.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-qrCode-arkit.debug.xcconfig"; path = "Pods/Target Support Files/Pods-qrCode-arkit/Pods-qrCode-arkit.debug.xcconfig"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -45,6 +47,7 @@
 		37A715F0205FC9E900B353AA = {
 			isa = PBXGroup;
 			children = (
+				37A71610205FDFA000B353AA /* Default-568h@2x.png */,
 				37A715FB205FC9E900B353AA /* qrCode-arkit */,
 				37A715FA205FC9E900B353AA /* Products */,
 				57C4A94D9E7E62CE8E1D478F /* Pods */,
@@ -156,6 +159,7 @@
 				37A715FF205FC9E900B353AA /* art.scnassets in Resources */,
 				37A71609205FC9E900B353AA /* LaunchScreen.storyboard in Resources */,
 				37A71606205FC9E900B353AA /* Assets.xcassets in Resources */,
+				37A71611205FDFA100B353AA /* Default-568h@2x.png in Resources */,
 				37A71604205FC9E900B353AA /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
