@@ -29,10 +29,11 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                     let scene = try SCNScene(url: URL(string: modelURL)!, options: nil)
                     self.downloadTexture(fromUrl: URL(string: textureURL)!, { (texture) in
                         if let textureImage = texture {
-                            let node = scene.rootNode.childNodes.first
+                            let shipnode = scene.rootNode.childNode(withName: "shipMesh", recursively: true)
+                            //let shipNode = scene.rootNode.childNodes.first?.childNodes.first
                             let material = SCNMaterial()
                             material.diffuse.contents = textureImage
-                            node?.geometry?.materials = [material]
+                            shipnode?.geometry?.materials = [material]
                             self.sceneView.scene = scene
                         }
                     })
@@ -48,8 +49,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-//        let configuration = ARWorldTrackingConfiguration()
-//        sceneView.session.run(configuration)
+        let configuration = ARWorldTrackingConfiguration()
+        sceneView.session.run(configuration)
     }
     
     override func viewWillDisappear(_ animated: Bool) {
