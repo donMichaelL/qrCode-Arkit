@@ -16,15 +16,55 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
     @IBOutlet var sceneView: ARSCNView!
     
+    var discoveredQRCodes = [String]()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         sceneView.delegate = self
         sceneView.showsStatistics = true
-        downloadExhibitDetails(fromUrl: URL(string: "http://195.134.67.227:8000/api/details/6")!) { (exhibit) in
+    }
+    
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        let configuration = ARWorldTrackingConfiguration()
+        sceneView.session.run(configuration)
+        sceneView.session.delegate = self
+    }
+    
+    override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        sceneView.session.pause()
+    }
+    
+    override func didReceiveMemoryWarning() {
+        super.didReceiveMemoryWarning()
+        // Release any cached data, images, etc that aren't in use.
+    }
+}
+
+extension ViewController: ARSessionDelegate {
+    func session(_ session: ARSession, didUpdate frame: ARFrame) {
+        let image = CIImage(cvPixelBuffer: frame.capturedImage)
+        let detector = CIDetector(ofType: CIDetectorTypeQRCode, context: nil, options: nil)
+        let features = detector!.features(in: image)
+        
+        for feature in features as! [CIQRCodeFeature] {
+            if !discoveredQRCodes.contains(feature.messageString!) {
+                discoveredQRCodes.append(feature.messageString!)
+                let url = URL(string: feature.messageString!)
+                add3DModel(fromURL: url!)
+            }
+        }
+    }
+}
+
+extension ViewController {
+    func add3DModel(fromURL url: URL) {
+        downloadExhibitDetails(fromUrl: url) { (exhibit) in
             if let exhibitJSON = exhibit {
-                let modelURL = "http://195.134.67.227:8000" + exhibitJSON["model_3d"].string!
-                let textureURL = "http://195.134.67.227:8000" + exhibitJSON["texture"].string!
+                let modelURL = self.returnFullDomainURL(fromURL: url) + exhibitJSON["model_3d"].string!
+                let textureURL = self.returnFullDomainURL(fromURL: url) + exhibitJSON["texture"].string!
                 do {
                     let scene = try SCNScene(url: URL(string: modelURL)!, options: nil)
                     self.downloadTexture(fromUrl: URL(string: textureURL)!, { (texture) in
@@ -37,53 +77,18 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                             self.sceneView.scene = scene
                         }
                     })
-                    
-
                 } catch {
                     print(error)
                 }
-                
             }
         }
     }
     
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        let configuration = ARWorldTrackingConfiguration()
-        sceneView.session.run(configuration)
+    func returnFullDomainURL(fromURL url: URL) -> String {
+        return url.scheme! + "://" + url.host! + ":" + String(url.port!)
     }
     
-    override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        
-        // Pause the view's session
-        sceneView.session.pause()
-    }
     
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Release any cached data, images, etc that aren't in use.
-    }
-
-    // MARK: - ARSCNViewDelegate
-    
-    func session(_ session: ARSession, didFailWithError error: Error) {
-        // Present an error message to the user
-        
-    }
-    
-    func sessionWasInterrupted(_ session: ARSession) {
-        // Inform the user that the session has been interrupted, for example, by presenting an overlay
-        
-    }
-    
-    func sessionInterruptionEnded(_ session: ARSession) {
-        // Reset tracking and/or remove existing anchors if consistent tracking is required
-        
-    }
-}
-
-extension ViewController {
     func downloadExhibitDetails(fromUrl url: URL,_ completion: @escaping (JSON?)->()) {
         Alamofire.request(url, method: .get, parameters: nil).responseJSON { (response) in
             if response.result.isSuccess {
