@@ -23,6 +23,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
         sceneView.delegate = self
         sceneView.showsStatistics = true
+        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -53,14 +54,18 @@ extension ViewController: ARSessionDelegate {
             if !discoveredQRCodes.contains(feature.messageString!) {
                 discoveredQRCodes.append(feature.messageString!)
                 let url = URL(string: feature.messageString!)
-                add3DModel(fromURL: url!)
+                let position = SCNVector3(frame.camera.transform.columns.3.x,
+                                          frame.camera.transform.columns.3.y,
+                                          frame.camera.transform.columns.3.z)
+                add3DModel(fromURL: url!, toPosition: position)
+                print(frame.camera.transform)
             }
         }
     }
 }
 
 extension ViewController {
-    func add3DModel(fromURL url: URL) {
+    func add3DModel(fromURL url: URL, toPosition position: SCNVector3) {
         downloadExhibitDetails(fromUrl: url) { (exhibit) in
             if let exhibitJSON = exhibit {
                 let modelURL = self.returnFullDomainURL(fromURL: url) + exhibitJSON["model_3d"].string!
@@ -68,13 +73,16 @@ extension ViewController {
                 do {
                     let scene = try SCNScene(url: URL(string: modelURL)!, options: nil)
                     self.downloadTexture(fromUrl: URL(string: textureURL)!, { (texture) in
+                        let shipnode = scene.rootNode.childNode(withName: "shipMesh", recursively: true)
                         if let textureImage = texture {
-                            let shipnode = scene.rootNode.childNode(withName: "shipMesh", recursively: true)
                             //let shipNode = scene.rootNode.childNodes.first?.childNodes.first
                             let material = SCNMaterial()
                             material.diffuse.contents = textureImage
                             shipnode?.geometry?.materials = [material]
-                            self.sceneView.scene = scene
+                            shipnode?.position = position
+                            self.sceneView.scene.rootNode.addChildNode(shipnode!)
+                        } else {
+                            self.sceneView.scene.rootNode.addChildNode(shipnode!)
                         }
                     })
                 } catch {
@@ -108,6 +116,7 @@ extension ViewController {
                     completion(UIImage(data: data))
                 }
             } catch {
+                completion(nil)
                 print("Error \(error)")
             }
         }
