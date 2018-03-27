@@ -11,6 +11,7 @@ import SceneKit
 import ARKit
 import Alamofire
 import SwiftyJSON
+import AVKit
 
 class ViewController: UIViewController, ARSCNViewDelegate {
 
@@ -23,7 +24,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
         sceneView.delegate = self
         sceneView.showsStatistics = true
-        sceneView.debugOptions = [ARSCNDebugOptions.showFeaturePoints]
+        sceneView.debugOptions = [ARSCNDebugOptions.showWorldOrigin]
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -37,11 +38,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         super.viewWillDisappear(animated)
         sceneView.session.pause()
     }
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Release any cached data, images, etc that aren't in use.
-    }
 }
 
 extension ViewController: ARSessionDelegate {
@@ -54,14 +50,78 @@ extension ViewController: ARSessionDelegate {
             if !discoveredQRCodes.contains(feature.messageString!) {
                 discoveredQRCodes.append(feature.messageString!)
                 let url = URL(string: feature.messageString!)
-                add3DModel(fromURL: url!, toPosition: getPositionBasedOnQRCode(frame: frame, position: "df"))
-                print(frame.camera.transform)
+                let position = SCNVector3(frame.camera.transform.columns.3.x,
+                                          frame.camera.transform.columns.3.y,
+                                          frame.camera.transform.columns.3.z)
+//                add3DModel(fromURL: url!, toPosition: getPositionBasedOnQRCode(frame: frame, position: "df"))
+                print(position)
+                add3dInstance(fromURL: url!, toPosition: position)
             }
         }
     }
 }
 
 extension ViewController {
+    func add3dInstance(fromURL url: URL, toPosition position: SCNVector3) {
+        downloadExhibitDetails(fromUrl: url) { (result) in
+            if let exhibitJSON = result {
+                if let model3dUrl = exhibitJSON["model_3d"].string {
+                    print(model3dUrl)
+                }
+                if let text = exhibitJSON["text"].string {
+                    print(position)
+                    self.add3DText(text: text, toPosition: position)
+                }
+                if let image = exhibitJSON["image"].string {
+                    let urlString = "http://195.134.67.227:8000" + image
+                    print(urlString)
+                    self.add3dImage(from: URL(string: urlString)! , toPosition: position)
+                }
+                if let video = exhibitJSON["video"].string {
+                    let urlString = "http://www.ebookfrenzy.com/ios_book/movie/movie.mov"
+//                    let urlString =  "http://195.134.67.227:8000" + video
+                    print(urlString)
+                    let videoURL = URL(string: urlString)!
+                    let player = AVPlayer(url: videoURL)
+                    let playerViewController = AVPlayerViewController()
+                    playerViewController.player = player
+                    self.present(playerViewController, animated: true) {
+                        playerViewController.player!.play()
+                    }
+                }
+            }
+        }
+    }
+    
+    func add3dImage(from url: URL, toPosition position: SCNVector3) {
+        downloadTexture(fromUrl: url) { (result) in
+            if let image = result {
+                let plane = SCNPlane(width: 0.1, height: 0.1)
+                let material = SCNMaterial()
+                material.diffuse.contents = image
+                plane.materials = [material]
+                let node = SCNNode(geometry: plane)
+                node.position = position
+                self.sceneView.scene.rootNode.addChildNode(node)
+            }
+        }
+    }
+    
+    func add3DText(text: String, toPosition position: SCNVector3) {
+//        let cube = SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0.01)
+        let cube = SCNText(string: "A", extrusionDepth: 0.0)
+        
+        let material = SCNMaterial()
+        material.diffuse.contents = UIColor.red
+        cube.materials = [material]
+        let node = SCNNode(geometry: cube)
+//        node.position = SCNVector3(x: -0.2, y: 0.1, z: -0.5)
+        node.position = position
+        print(position)
+        self.sceneView.scene.rootNode.addChildNode(node)
+        print("HELLO")
+    }
+    
     func add3DModel(fromURL url: URL, toPosition position: SCNVector3) {
         downloadExhibitDetails(fromUrl: url) { (exhibit) in
             if let exhibitJSON = exhibit {
@@ -92,13 +152,6 @@ extension ViewController {
     func returnFullDomainURL(fromURL url: URL) -> String {
         return url.scheme! + "://" + url.host! + ":" + String(url.port!)
     }
-    
-    func getPositionBasedOnQRCode(frame: ARFrame, position: String) -> SCNVector3 {
-        return SCNVector3(frame.camera.transform.columns.3.x,
-                          frame.camera.transform.columns.3.y,
-                          frame.camera.transform.columns.3.z)
-    }
-    
     
     func downloadExhibitDetails(fromUrl url: URL,_ completion: @escaping (JSON?)->()) {
         Alamofire.request(url, method: .get, parameters: nil).responseJSON { (response) in
