@@ -54,10 +54,7 @@ extension ViewController: ARSessionDelegate {
             if !discoveredQRCodes.contains(feature.messageString!) {
                 discoveredQRCodes.append(feature.messageString!)
                 let url = URL(string: feature.messageString!)
-                let position = SCNVector3(frame.camera.transform.columns.3.x,
-                                          frame.camera.transform.columns.3.y,
-                                          frame.camera.transform.columns.3.z)
-                add3DModel(fromURL: url!, toPosition: position)
+                add3DModel(fromURL: url!, toPosition: getPositionBasedOnQRCode(frame: frame, position: "df"))
                 print(frame.camera.transform)
             }
         }
@@ -94,6 +91,12 @@ extension ViewController {
     
     func returnFullDomainURL(fromURL url: URL) -> String {
         return url.scheme! + "://" + url.host! + ":" + String(url.port!)
+    }
+    
+    func getPositionBasedOnQRCode(frame: ARFrame, position: String) -> SCNVector3 {
+        return SCNVector3(frame.camera.transform.columns.3.x,
+                          frame.camera.transform.columns.3.y,
+                          frame.camera.transform.columns.3.z)
     }
     
     
